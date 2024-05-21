@@ -1,4 +1,4 @@
-# Dissidia Mod Manager
+# TKinter Mod Manager
 
 ## Features
 
