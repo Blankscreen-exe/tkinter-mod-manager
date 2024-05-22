@@ -1,4 +1,4 @@
-from tkinter import Tk, ttk, filedialog
+from tkinter import Tk, ttk, filedialog, Frame, StringVar
 from tkinter import Listbox
 from pprint import pprint as pp
 
@@ -25,12 +25,24 @@ def handle_browse(folder_path_var):
 # Create the main window
 root = Tk()
 root.title("Mod Manager")
-root.geometry("450x220")  # Set initial window size
+root.geometry("440x220")  # Set initial window size
 root.resizable(False, False)
+
+button_style = ttk.Style()
+button_style.configure(
+            'Custom.TButton',
+            font=('Calibri', 8, 'normal'),
+            foreground='white',
+            background='#278ef0',
+            width='11',
+        )
+button_style.map('Custom.TButton',
+    foreground=[('active', '!disabled', 'black')],
+    background=[('active', '!disabled', '#a9d3fa')],
+)
 
 # Create the notebook (tabs container)
 notebook = ttk.Notebook(root)
-# notebook.pack(expand=True, fill="both")
 notebook.grid(column=0, columnspan=6, row=0, rowspan=6)
 
 # Create frames for each tab
@@ -41,155 +53,133 @@ settings_frame = ttk.Frame(notebook)
 notebook.add(manage_frame, text="Manage")
 notebook.add(settings_frame, text="Settings")
 
-# Manage tab layout
+# MSG: Manage tab layout
 
 # Frame to hold both listboxes and buttons
 manage_content_frame = ttk.Frame(manage_frame)
 # manage_content_frame.pack(padx=10, pady=10)  # Add some padding
 manage_content_frame.grid(column=0, columnspan=6, row=0, rowspan=6)
 
+# BOOKMARK: scroll listbox
+
+class ScrollableListbox(Frame):
+    def __init__(self, master, items, width=50, height=10, selectmode="browse"):
+        super().__init__(master)  # Call parent constructor
+        self.master = master
+
+        # Listbox
+        self.listbox = Listbox(self, selectmode=selectmode, width=width, height=height)
+        for item in items:
+            self.listbox.insert("end", item)
+        self.listbox.grid(column=0,row=0)
+
+        # Scrollbar
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.listbox.yview)
+        self.scrollbar.grid(column=1,row=0)
+
+        # Link scrollbar and listbox
+        self.listbox.config(yscrollcommand=self.scrollbar.set)
+
 # BOOKMARK: BUTTON OPTIONS
 
-# Left side frame for Listbox 2, title, and buttons
-right_frame = ttk.Frame(manage_content_frame)
-# right_frame.pack(side="right")
-right_frame.grid(column=6, row=0, rowspan=6)
+class ButtonBar(Frame):
+    def __init__(self, master, button_texts=["Refresh List", "Install Mod", "Uninstall Mods"]):
+        super().__init__(master)  # Call parent constructor
+        self.master = master
 
-# Title label for Listbox 2 (bold)
-# listbox2_title = ttk.Label(right_frame, text="Mod Files", font=("TkDefaultFont", 12, "bold"))
-# listbox2_title.pack(padx=5, pady=5)
-
-# Listbox 2
-# listbox2 = Listbox(right_frame, height=5, selectmode="browse")
-# for item in items_lists[1]:
-#   listbox2.insert("end", item)
-# listbox2.bind("<<ListboxSelect>>", lambda event: handle_selection(event, 1))  # Bind selection event
-# listbox2.pack(fill="both", expand=True)
-
-# button styles
-button_style = ttk.Style().configure('W.TButton', font = ('calibri', 8, 'normal'))
-
-# Buttons for Listbox 2 
-button1 = ttk.Button(right_frame, text="Refresh List", style=button_style)
-# button1.pack(side='top', fill='x')
-button1.grid(column=6, row=2)
-button1 = ttk.Button(right_frame, text="Install Mod", style=button_style)
-# button1.pack(side='top', fill='x')
-button1.grid(column=6, row=3)
-button2 = ttk.Button(right_frame, text="Uninstall Mods", style=button_style)
-# button2.pack(side='top', fill='x')
-button2.grid(column=6, row=4)
+        button = ttk.Button(self, text=' Refresh List ', style="Custom.TButton")
+        button.grid(column=0, row=0, sticky='n', padx=3)  
+        button = ttk.Button(self, text='  Install Mod  ', style="Custom.TButton")
+        button.grid(column=0, row=1, sticky='n', padx=3)  
+        button = ttk.Button(self, text='Uninstall Mod', style="Custom.TButton")
+        button.grid(column=0, row=2, sticky='n', padx=3)  
 
 
 # BOOKMARK: LISTBOX 2
 
-# Left side frame for Listbox 2, title, and buttons
-right_frame = ttk.Frame(manage_content_frame)
-# right_frame.pack(side="right")
-right_frame.grid(column=2, columnspan=2, row=0, rowspan=6)
+class ListBoxFrame2(Frame):
+    def __init__(self, master, title_text, items_list, select_callback):
+        super().__init__(master)  # Call parent constructor
+        self.master = master
 
-# Title label for Listbox 2 (bold)
-listbox2_title = ttk.Label(right_frame, text="Mod Files", font=("TkDefaultFont", 12, "bold"))
-# listbox2_title.pack(padx=5, pady=5, side='top')
-listbox2_title.grid(column=2, columnspan=2, row=0)
+        # Create title label
+        self.title_label = ttk.Label(self, text=title_text, font=("TkDefaultFont", 12, "bold"))
+        self.title_label.grid(column=0, columnspan=2, row=0)
 
-# Listbox 2
-listbox2 = Listbox(right_frame, height=5, selectmode="browse")
-for item in items_lists[1]:
-  listbox2.insert("end", item)
-listbox2.bind("<<ListboxSelect>>", lambda event: handle_selection(event, 1))  # Bind selection event
-# listbox2.pack(fill="both", expand=True, side='top')
-listbox2.grid(column=2, columnspan=2, row=1, rowspan=5, sticky='n')
+        # Create listbox
+        self.listbox = Listbox(self, height=5, selectmode="multiple")
+        for item in items_list:
+            self.listbox.insert("end", item)
+        self.listbox.bind("<<ListboxSelect>>", lambda event: select_callback(event))
+        self.listbox.grid(column=0, columnspan=2, row=1, rowspan=5, ipadx=7)
 
-# button styles
-button_style = ttk.Style().configure('W.TButton', font = ('calibri', 8, 'normal'))
-
-# Buttons for Listbox 2 
-button1 = ttk.Button(right_frame, text="Select All", style=button_style)
-# button1.pack(side='left')
-button1.grid(column=2, row=6)
-button2 = ttk.Button(right_frame, text="De-Select All", style=button_style)
-# button2.pack(side='right')
-button2.grid(column=3, row=6)
+        # Create buttons dynamically
+        button_texts = ["Select All", "De-Select All"]
+        for i, text in enumerate(button_texts):
+            button = ttk.Button(self, text=text, style="Custom.TButton")
+            button.grid(column=i, row=6)  # Adjust grid options
 
 # BOOKMARK: LISTBOX 1
 
-# Right side frame for Listbox 1 and title
-left_frame = ttk.Frame(manage_content_frame)
-# left_frame.pack(side="left", fill="both", expand=True)
-left_frame.grid(column=0, columnspan=2, row=0, rowspan=6)
+class ListBoxFrame1(Frame):
+    def __init__(self, master, title_text, items_list, select_callback, full_height=False):
+        super().__init__(master)  # Call parent constructor
+        self.master = master
 
-# Title label for Listbox 1 (bold)
-listbox1_title = ttk.Label(left_frame, text="Mod List", font=("TkDefaultFont", 12, "bold"))
-# listbox1_title.pack(padx=5, pady=5)
-listbox1_title.grid(column=0, columnspan=2, row=0)
+        # Create title label
+        self.title_label = ttk.Label(self, text=title_text, font=("TkDefaultFont", 12, "bold"))
+        self.title_label.grid(column=0, columnspan=2, row=0)
 
-# Listbox 1 (full height)
-listbox1 = Listbox(left_frame, selectmode="browse")
-for item in items_lists[0]:
-  listbox1.insert("end", item)
-listbox1.bind("<<ListboxSelect>>", lambda event: handle_selection(event, 0))  # Bind selection event
-# listbox1.pack(fill="y", expand=True, side='left')
-listbox1.grid(column=0, columnspan=2, row=1, rowspan=2)
-
-# REVIEW: ---------------------------------------------------
-
-# Settings tab (remains the same as before)
-# settings_label = ttk.Label(settings_frame, text="This is the Settings tab content.")
-# # settings_label.pack(padx=10, pady=10)
-# settings_label.grid(column=0, columnspan=6, row=0, rowspan=6)
-
-# BOOKMARK: source folder
-
-row_frame1 = ttk.Frame(settings_frame)
-# row_frame1.pack(fill="x", pady=5)
-row_frame1.grid(column=0, columnspan=6, row=0)
-
-source_folder_path_var = ''
-
-# Label for folder path
-folder_label = ttk.Label(row_frame1, text='Source Folder        ')
-# folder_label.pack(side="left")
-folder_label.grid(column=0, columnspan=2, row=0)
+        # Create listbox
+        self.listbox = Listbox(self, selectmode="browse")
+        for item in items_list:
+            self.listbox.insert("end", item)
+        self.listbox.bind("<<ListboxSelect>>", lambda event: select_callback(event))
+        if full_height:
+            self.listbox.grid(column=0, columnspan=2, row=1, rowspan=5, sticky='n')  # Adjust for full height
+        else:
+            self.listbox.grid(column=0, columnspan=2, row=1, rowspan=2)  # Adjust for partial height
 
 
-# Input box for folder path
-folder_entry = ttk.Entry(row_frame1, textvariable=source_folder_path_var, width=25)  # Adjust width as needed
-# folder_entry.pack(side="left", expand=True)
-folder_entry.grid(column=2, columnspan=3, row=0)
+# MSG: Settings tab
+
+class FolderPathEntry(Frame):
+    def __init__(self, master, label_text, variable, browse_command):
+        super().__init__(master)  # Call parent constructor
+        self.master = master
+
+        # Label for folder path
+        self.folder_label = ttk.Label(self, text=label_text)
+        self.folder_label.grid(column=0, columnspan=2, row=0)
+
+        # Input box for folder path
+        self.folder_entry = ttk.Entry(self, textvariable=variable, width=25)  # Adjust width as needed
+        self.folder_entry.grid(column=2, columnspan=3, row=0, padx=15)
+
+        # Browse button
+        self.browse_button = ttk.Button(self, text="Browse", style='Custom.TButton', command=lambda: browse_command(variable))
+        self.browse_button.grid(column=6, row=0)
 
 
-# Browse button
-browse_button = ttk.Button(row_frame1, text="Browse", command=(lambda var=source_folder_path_var: handle_browse(var)))
-# browse_button.pack(side="right")
-browse_button.grid(column=6, row=0)
+# -----------------------------------------------------------------
+right_frame = ButtonBar(manage_content_frame, ["Refresh List", "Install Mod", "Uninstall Mods"])
+right_frame.grid(column=6, row=0, rowspan=6)
 
+listbox_frame_2 = ListBoxFrame2(manage_content_frame, "Mod Files", items_lists[1], handle_selection)
+listbox_frame_2.grid(column=2, columnspan=2, row=0, rowspan=6, sticky='n')
 
-# BOOKMARK: destination folder
+listbox_frame_1 = ListBoxFrame1(manage_content_frame, "Mod List", items_lists[0], handle_selection, full_height=True)
+listbox_frame_1.grid(column=0, columnspan=2, row=0, rowspan=6)
 
-row_frame2 = ttk.Frame(settings_frame)
-# row_frame2.pack(fill="x", pady=5)
-row_frame2.grid(column=1, columnspan=6, row=1)
+# Example usage (Source folder)
+source_folder_path_var = StringVar()
+source_folder_entry = FolderPathEntry(settings_frame, "Source Folder        ", source_folder_path_var, handle_browse)
+source_folder_entry.grid(column=0, columnspan=6, row=0)
 
-destination_folder_path_var = ''
-
-# Label for folder path
-folder_label = ttk.Label(row_frame2, text='Destination Folder')
-# folder_label.pack(side="left")
-folder_label.grid(column=0, columnspan=2, row=1)
-
-
-# Input box for folder path
-folder_entry = ttk.Entry(row_frame2, textvariable=destination_folder_path_var, width=25)  # Adjust width as needed
-# folder_entry.pack(side="left", expand=True)
-folder_entry.grid(column=2, columnspan=3, row=1)
-
-
-# Browse button
-browse_button = ttk.Button(row_frame2, text="Browse", command=(lambda var=destination_folder_path_var: handle_browse(var)))
-# browse_button.pack(side="right")
-browse_button.grid(column=6, row=1)
-
+# Example usage (Destination folder)
+destination_folder_path_var = StringVar()
+destination_folder_entry = FolderPathEntry(settings_frame, "Destination Folder", destination_folder_path_var, handle_browse)
+destination_folder_entry.grid(column=1, columnspan=6, row=1)
 
 # Run the main loop
 root.mainloop()
