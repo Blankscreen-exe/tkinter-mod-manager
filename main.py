@@ -1,20 +1,40 @@
 from tkinter import Tk, ttk, filedialog, Frame, StringVar
 from tkinter import Listbox
 from pprint import pprint as pp
+from functions import *
+import os
+
+class config:
+  source_folder = "/externalvolumes/Hammad/tkinter_practice/mod_dl/"
+  destination_folder = "/externalvolumes/Hammad/tkinter_practice/mod_loaded/"
 
 
 # Sample items lists (replace with your data source)
 items_lists = [[], []]
-for index in range(20):
-  items_lists[0].append(f'Item A - {index}')
-  items_lists[1].append(f'Item B - {index}')
+
+items_lists[0] = get_folder_names(config.source_folder)
+
+# for index in range(20):
+#   items_lists[0].append(f'Item A - {index}')
+#   items_lists[1].append(f'Item B - {index}')
 
 # Function to handle listbox selection (replace with your logic)
-def handle_selection(event, listbox_index):
-  selected_index = event.curselection[0]
-  selected_item = items_lists[listbox_index][selected_index]
-  pp(vars(event))
-  print(f"Selected item in listbox {listbox_index}:", selected_item)
+def handle_selection(event, listbox_type):
+  selected_index = event.widget.curselection()[0]
+  selected_item = event.widget.get(selected_index)
+  mod_folder_path = os.path.join(config.source_folder)
+  print(mod_folder_path)
+  items_lists[1] = get_folder_contents(mod_folder_path)[selected_index]['files']
+  print(items_lists[1])
+
+  print(f"Selected item in listbox {listbox_type}: {selected_item} mit {selected_index}")
+
+  # TODO: Update the target listbox based on the selection
+  target_listbox.delete(0, tk.END)  # Clear target listbox first (optional)
+  # Add new items to the target listbox based on selected item or logic
+  target_listbox.insert("end", "New Item 1 based on", selected_item)
+  target_listbox.insert("end", "New Item 2 based on", selected_item)
+
 
 # Function to handle browse button click
 def handle_browse(folder_path_var):
@@ -98,7 +118,7 @@ class ButtonBar(Frame):
 # BOOKMARK: LISTBOX 2
 
 class ListBoxFrame2(Frame):
-    def __init__(self, master, title_text, items_list, select_callback):
+    def __init__(self, master, title_text, items_list):
         super().__init__(master)  # Call parent constructor
         self.master = master
 
@@ -107,11 +127,11 @@ class ListBoxFrame2(Frame):
         self.title_label.grid(column=0, columnspan=2, row=0)
 
         # Create listbox
-        self.listbox = Listbox(self, height=5, selectmode="multiple")
+        self.listbox2 = Listbox(self, height=5, selectmode="multiple")
         for item in items_list:
-            self.listbox.insert("end", item)
-        self.listbox.bind("<<ListboxSelect>>", lambda event: select_callback(event))
-        self.listbox.grid(column=0, columnspan=2, row=1, rowspan=5, ipadx=7)
+            self.listbox2.insert("end", item)
+        self.listbox2.bind("<<ListboxSelect>>", lambda event: handle_selection(event, 'mod-file-list'))
+        self.listbox2.grid(column=0, columnspan=2, row=1, rowspan=5, ipadx=7)
 
         # Create buttons dynamically
         button_texts = ["Select All", "De-Select All"]
@@ -122,7 +142,7 @@ class ListBoxFrame2(Frame):
 # BOOKMARK: LISTBOX 1
 
 class ListBoxFrame1(Frame):
-    def __init__(self, master, title_text, items_list, select_callback, full_height=False):
+    def __init__(self, master, title_text, items_list, full_height=False):
         super().__init__(master)  # Call parent constructor
         self.master = master
 
@@ -131,14 +151,14 @@ class ListBoxFrame1(Frame):
         self.title_label.grid(column=0, columnspan=2, row=0)
 
         # Create listbox
-        self.listbox = Listbox(self, selectmode="browse")
+        self.listbox1 = Listbox(self, selectmode="browse")
         for item in items_list:
-            self.listbox.insert("end", item)
-        self.listbox.bind("<<ListboxSelect>>", lambda event: select_callback(event))
+            self.listbox1.insert("end", item)
+        self.listbox1.bind("<<ListboxSelect>>", lambda event: handle_selection(event, "mod-folder-list"))
         if full_height:
-            self.listbox.grid(column=0, columnspan=2, row=1, rowspan=5, sticky='n')  # Adjust for full height
+            self.listbox1.grid(column=0, columnspan=2, row=1, rowspan=5, sticky='n')  # Adjust for full height
         else:
-            self.listbox.grid(column=0, columnspan=2, row=1, rowspan=2)  # Adjust for partial height
+            self.listbox1.grid(column=0, columnspan=2, row=1, rowspan=2)  # Adjust for partial height
 
 
 # MSG: Settings tab
@@ -165,10 +185,12 @@ class FolderPathEntry(Frame):
 right_frame = ButtonBar(manage_content_frame, ["Refresh List", "Install Mod", "Uninstall Mods"])
 right_frame.grid(column=6, row=0, rowspan=6)
 
-listbox_frame_2 = ListBoxFrame2(manage_content_frame, "Mod Files", items_lists[1], handle_selection)
+listbox_frame_2 = ListBoxFrame2(manage_content_frame, "Mod Files", items_lists[1])
+listbox_frame_2.bind('<Button>' ,handle_selection)
 listbox_frame_2.grid(column=2, columnspan=2, row=0, rowspan=6, sticky='n')
 
-listbox_frame_1 = ListBoxFrame1(manage_content_frame, "Mod List", items_lists[0], handle_selection, full_height=True)
+listbox_frame_1 = ListBoxFrame1(manage_content_frame, "Mod List", items_lists[0], full_height=True)
+listbox_frame_1.bind('<Button>' ,handle_selection)
 listbox_frame_1.grid(column=0, columnspan=2, row=0, rowspan=6)
 
 # Example usage (Source folder)
