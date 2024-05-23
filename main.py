@@ -1,4 +1,4 @@
-from tkinter import Tk, ttk, filedialog, Frame, StringVar, IntVar, END
+from tkinter import Tk, ttk, filedialog, Frame, StringVar, IntVar, Variable, END
 from tkinter import Listbox
 from pprint import pprint as pp
 from functions import *
@@ -90,6 +90,7 @@ class ListBoxFrame2(Frame):
 
         self.func_get_config = func_get_config
 
+
         # Create title label
         self.title_label = ttk.Label(
             self, text='Mod Files', font=("TkDefaultFont", 12, "bold")
@@ -109,9 +110,13 @@ class ListBoxFrame2(Frame):
 
         # Create buttons dynamically
         button_texts = ["Select All", "De-Select All"]
-        for i, text in enumerate(button_texts):
-            button = ttk.Button(self, text=text, style="Custom1.TButton")
-            button.grid(column=i, row=6)  # Adjust grid options
+        
+        button_select_all = ttk.Button(self, text="Select All", style="Custom1.TButton")
+        button_select_all.bind('<Button>', lambda event: self.handle_select_all(event))
+        button_select_all.grid(column=0, row=6)
+        button_deselect_all = ttk.Button(self, text="De-Select All", style="Custom1.TButton")
+        button_deselect_all.bind('<Button>', lambda event: self.handle_deselect_all(event))
+        button_deselect_all.grid(column=1, row=6)
 
     # BUG: why does it need double click to show the list?
     def reset_file_list(self, folder_index=None):
@@ -127,7 +132,18 @@ class ListBoxFrame2(Frame):
             items_list = get_folder_contents(self.func_get_config()['source_folder_path'])[folder_index]['files']
             for item in items_list:
                 self.listbox2.insert(END, item)
+    
+    # TODO: make this maintain a list of selected files
+    def handle_select_all(self, event):
+        print()
+        print(event.widget)
+        print(event.widget.curselection())
+        # if folder_index is not None:
+        #     mod_files = get_folder_contents(self.read_config()['source_file_path'])[folder_index]['files']
+        #     self.selected_mod_files = mod_files
 
+    def handle_deselect_all(self):
+        pass
 
 # BOOKMARK: LISTBOX 1
 
@@ -216,6 +232,7 @@ class ModManager:
         self.config_file_name = 'modmanager_config.json'
         self.app_base_dir = os.getcwd()
         self.os_is_windows = platform.system() == "Windows"
+        self.selected_mod_files = []
 
         # load config
         self.read_config()
@@ -301,11 +318,11 @@ class ModManager:
         print(event.widget.curselection())
         self.listbox_frame_2.reset_file_list(folder_index=selected_index)
 
-        
-
     def handle_file_selection(self, event):
-        selected_index = event.widget.curselection()[0]
-        selected_item = event.widget.get(selected_index)
+        print(event.widget.curselection())
+        # selected_index = event.widget.curselection()[0]
+        # selected_item = event.widget.get(selected_index)
+        self.selected_mod_files = event.widget.curselection()
 
     def get_base_dir(self):
         return self.app_base_dir
