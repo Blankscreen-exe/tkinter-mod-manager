@@ -1,4 +1,4 @@
-from tkinter import Tk, ttk, filedialog, Frame, StringVar, END
+from tkinter import Tk, ttk, filedialog, Frame, StringVar, IntVar, END
 from tkinter import Listbox
 from pprint import pprint as pp
 from functions import *
@@ -84,9 +84,11 @@ class ButtonBar(Frame):
 
 
 class ListBoxFrame2(Frame):
-    def __init__(self, master, func_get_config):
+    def __init__(self, master, func_get_config, item_select_command ):
         super().__init__(master)  # Call parent constructor
         self.master = master
+
+        self.func_get_config = func_get_config
 
         # Create title label
         self.title_label = ttk.Label(
@@ -96,12 +98,15 @@ class ListBoxFrame2(Frame):
 
         # Create listbox
         self.listbox2 = Listbox(self, height=5, selectmode="multiple")
-        # TODO: fix this
-        items_list = ['a','b','c'] #func_get_config()
-        for item in items_list:
-            self.listbox2.insert("end", item)
+        
+        self.reset_file_list()
+        # # TODO: fix this
+        # items_list = ['a','b','c'] #func_get_config()
+
+        # for item in items_list:
+        #     self.listbox2.insert("end", item)
         self.listbox2.bind(
-            "<<ListboxSelect>>", lambda event: handle_selection(event, "mod-file-list")
+            "<<ListboxSelect>>", lambda event: item_select_command(event)
         )
         self.listbox2.grid(column=0, columnspan=2, row=1, rowspan=5, ipadx=7)
 
@@ -111,17 +116,22 @@ class ListBoxFrame2(Frame):
             button = ttk.Button(self, text=text, style="Custom1.TButton")
             button.grid(column=i, row=6)  # Adjust grid options
 
-    def get_file_list(self, folder_name):
+    def reset_file_list(self, folder_index=None):
         """updates the listbox with files from within the mod folder
         """
-        # self.listbox_frame_1.populate_list(folder_index)
+        if folder_index:
+
+            self.listbox2.delete(0, END)
+            items_list = get_folder_contents(self.func_get_config()[folder_index]['files'])
+            for item in items_list:
+                self.listbox2.insert(END, item)
 
 
 # BOOKMARK: LISTBOX 1
 
 
 class ListBoxFrame1(Frame):
-    def __init__(self, master, func_get_config, full_height=False):
+    def __init__(self, master, func_get_config, item_select_command, full_height=False):
         super().__init__(master)
         self.master = master
 
@@ -135,17 +145,18 @@ class ListBoxFrame1(Frame):
 
         # Create listbox
         self.listbox1 = Listbox(self, selectmode="browse")
+        self.listbox1.bind('<Button>', lambda event: item_select_command(event))
 
         self.populate_list()
 
         if full_height:
             self.listbox1.grid(
                 column=0, columnspan=2, row=1, rowspan=5, sticky="n"
-            )  # Adjust for full height
+            )
         else:
             self.listbox1.grid(
                 column=0, columnspan=2, row=1, rowspan=2
-            )  # Adjust for partial height
+            ) 
 
     def populate_list(self, folder_path=None):
         print('called')
@@ -241,17 +252,17 @@ class ModManager:
 
         self.listbox_frame_2 = ListBoxFrame2(
             self.manage_content_frame, 
-            self.read_config
+            self.read_config,
+            self.handle_file_selection
         )
-        self.listbox_frame_2.bind("<Button>", self.handle_file_selection)
         self.listbox_frame_2.grid(column=2, columnspan=2, row=0, rowspan=6, sticky="n")
 
         self.listbox_frame_1 = ListBoxFrame1(
             self.manage_content_frame, 
-            self.read_config, 
+            self.read_config,
+            self.handle_folder_selection,
             full_height=True
         )
-        self.listbox_frame_1.bind("<Button>", self.handle_folder_selection)
         self.listbox_frame_1.grid(column=0, columnspan=2, row=0, rowspan=6)
 
         # MSG: Settings tab layout
@@ -281,10 +292,14 @@ class ModManager:
         # Run the main loop
         self.root.mainloop()
 
+    # FIXME: the very first call gives event=(,)
     def handle_folder_selection(self, event):
         selected_index = event.widget.curselection()[0]
         selected_item = event.widget.get(selected_index)
-        print(handle_folder_selection.__name__)
+        print(event.widget.curselection())
+        self.listbox_frame_2.reset_file_list(folder_index=selected_index)
+
+        
 
     def handle_file_selection(self, event):
         selected_index = event.widget.curselection()[0]
@@ -295,7 +310,6 @@ class ModManager:
 
     def handle_browse(self, data, path_type):
         selected_folder = filedialog.askdirectory()
-
         if selected_folder:
             if path_type == 'source':
                 self.set_source_folder_path(selected_folder)
@@ -305,8 +319,6 @@ class ModManager:
                 self.destination_folder_path_var.set(selected_folder)
 
     def handle_path_change(self, name, index, mode, sv, path_type):
-        print( name, index, mode, sv.get(), path_type)
-
         if sv.get():
             if path_type == 'source':
                 self.set_source_folder_path(sv.get())
