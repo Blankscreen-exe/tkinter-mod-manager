@@ -1,4 +1,4 @@
-from tkinter import Tk, ttk, filedialog, Frame, StringVar
+from tkinter import Tk, ttk, filedialog, Frame, StringVar, END
 from tkinter import Listbox
 from pprint import pprint as pp
 from functions import *
@@ -114,7 +114,7 @@ class ListBoxFrame2(Frame):
     def get_file_list(self, folder_name):
         """updates the listbox with files from within the mod folder
         """
-        pass
+        # self.listbox_frame_1.populate_list(folder_index)
 
 
 # BOOKMARK: LISTBOX 1
@@ -125,6 +125,8 @@ class ListBoxFrame1(Frame):
         super().__init__(master)
         self.master = master
 
+        self.func_get_config = func_get_config
+
         # Create title label
         self.title_label = ttk.Label(
             self, text='Mod Folders', font=("TkDefaultFont", 12, "bold")
@@ -133,19 +135,9 @@ class ListBoxFrame1(Frame):
 
         # Create listbox
         self.listbox1 = Listbox(self, selectmode="browse")
-        items_list = get_folder_names(func_get_config()['source_folder_path'])
-        # try:
-        #     items_list = get_folder_names(func_get_config()['source_folder_path'])
-        # except:
-        #     items_list = []
 
-        # for item in items_list:
-        #     self.listbox1.insert("end", item)
-        # self.listbox1.bind(
-        #     "<<ListboxSelect>>",
-        #     # TODO: refactor handle selection
-        #     lambda event: handle_selection(event, "mod-folder-list"),
-        # )
+        self.populate_list()
+
         if full_height:
             self.listbox1.grid(
                 column=0, columnspan=2, row=1, rowspan=5, sticky="n"
@@ -155,14 +147,15 @@ class ListBoxFrame1(Frame):
                 column=0, columnspan=2, row=1, rowspan=2
             )  # Adjust for partial height
 
-    def populate_list(self, folder_name=None):
-        if folder_name==None:
-            subfolder_list = get_folder_names(func_get_config()['source_folder_path'])['mod_list'][folder_name]
-
+    def populate_list(self, folder_path=None):
+        print('called')
+        if folder_path==None:
+            subfolder_list = get_folder_names(self.func_get_config()['source_folder_path'])
         else:
-            self.listbox1.delete(0, tk.END)
-            for item in folder_content_list:
-                self.listbox1.insert('end', item)
+            subfolder_list = get_folder_names(folder_path)
+        self.listbox1.delete(0, END)
+        for item in subfolder_list:
+            self.listbox1.insert(END, item)
 
 
 # MSG: Settings tab
@@ -211,13 +204,16 @@ class ModManager:
         self.app_base_dir = os.getcwd()
         self.os_is_windows = platform.system() == "Windows"
 
+        # load config
         self.read_config()
 
+        # initiate Tkinter
         self.root = Tk()
         self.root.title(self.app_title)
         self.root.geometry(self.app_window_size)
         self.root.resizable(False, False)
 
+        # Load styles
         self.get_styles()
 
         # Create the notebook (tabs container)
@@ -315,6 +311,7 @@ class ModManager:
             if path_type == 'source':
                 self.set_source_folder_path(sv.get())
                 self.source_folder_path_var.set(sv.get())
+                self.listbox_frame_1.populate_list(folder_path=sv.get())
             elif path_type == 'destination':
                 self.set_destination_folder_path(sv.get())
                 self.destination_folder_path_var.set(sv.get())
@@ -348,12 +345,6 @@ class ModManager:
         print(folder_names)
 
     def set_source_folder_path(self, path):
-        # self.app_config['source_folder_path'] = os.path.join(self.app_base_dir, path.strip('.')) if path.startswith('.') else path
-        # if self.os_is_windows:
-        #     source_path = os.path.join(self.app_base_dir, *filter(lambda x: x is not '', path.strip('.').split('\\'))) 
-        # else:
-        #     source_path = os.path.join(self.app_base_dir, *filter(lambda x: x is not '', path.strip('.').split('/'))) 
-        
         if not os.path.isabs(path):
             raise ValueError('Path should be absolute not relative.')
         
@@ -361,8 +352,6 @@ class ModManager:
             'source_folder_path', 
             path
         )
-        # with open(self.config_file_name, 'w', encoding='utf-8') as f:
-        #     json.dump(self.get_config_template(), f, indent=4)
 
     def set_destination_folder_path(self, path):
         if not os.path.isabs(path):
