@@ -99,12 +99,9 @@ class ListBoxFrame2(Frame):
         # Create listbox
         self.listbox2 = Listbox(self, height=5, selectmode="multiple")
         
-        self.reset_file_list()
-        # # TODO: fix this
-        # items_list = ['a','b','c'] #func_get_config()
+        # REVIEW: do we need to run it here
+        # self.reset_file_list()
 
-        # for item in items_list:
-        #     self.listbox2.insert("end", item)
         self.listbox2.bind(
             "<<ListboxSelect>>", lambda event: item_select_command(event)
         )
@@ -116,13 +113,18 @@ class ListBoxFrame2(Frame):
             button = ttk.Button(self, text=text, style="Custom1.TButton")
             button.grid(column=i, row=6)  # Adjust grid options
 
+    # BUG: why does it need double click to show the list?
     def reset_file_list(self, folder_index=None):
         """updates the listbox with files from within the mod folder
         """
-        if folder_index:
+        if folder_index is not None:
 
             self.listbox2.delete(0, END)
-            items_list = get_folder_contents(self.func_get_config()[folder_index]['files'])
+            print(folder_index)
+            pp(self.func_get_config(), indent=4)
+            mod_folder_name = get_folder_names(self.func_get_config()['source_folder_path'])[folder_index]
+            print(os.path.join(self.func_get_config()['source_folder_path'], mod_folder_name))
+            items_list = get_folder_contents(self.func_get_config()['source_folder_path'])[folder_index]['files']
             for item in items_list:
                 self.listbox2.insert(END, item)
 

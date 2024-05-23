@@ -73,7 +73,11 @@ def get_folder_names(folder_path):
   Returns:
       A list of folder names within the given folder.
   """
-  return [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name))]
+  try:
+    return [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name))]
+  except Exception as e:
+    print(f"Error getting folder names: {e}")
+    return []
 
 def get_folder_contents(folder_path):
   """
