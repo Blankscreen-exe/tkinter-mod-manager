@@ -157,7 +157,7 @@ class ModManager:
         self.app_title = 'Mod Manager'
         self.app_window_size = "365x220" if platform.system() == "Windows" else "440x220" 
         self.config_file_name = 'modmanager_config.json'
-        self.app_icon = '.\\shape.png'
+        self.app_icon = os.path.join('.','app.png')
         self.app_base_dir = os.getcwd()
         self.os_is_windows = platform.system() == "Windows"
         self.selected_mod_files = []
