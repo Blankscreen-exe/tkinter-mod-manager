@@ -1,4 +1,4 @@
-from tkinter import Tk, ttk, filedialog, Frame, StringVar, IntVar, Variable, END
+from tkinter import Tk, ttk, filedialog, Frame, StringVar, IntVar, Variable, END, PhotoImage
 from tkinter import Listbox
 from pprint import pprint as pp
 from functions import *
@@ -224,6 +224,7 @@ class ModManager:
         self.app_title = 'Mod Manager'
         self.app_window_size = "440x220"
         self.config_file_name = 'modmanager_config.json'
+        self.app_icon = './shape.png'
         self.app_base_dir = os.getcwd()
         self.os_is_windows = platform.system() == "Windows"
         self.selected_mod_files = []
@@ -236,6 +237,8 @@ class ModManager:
         self.root.title(self.app_title)
         self.root.geometry(self.app_window_size)
         self.root.resizable(False, False)
+        self.app_icon = PhotoImage(file=os.path.abspath(self.app_icon))
+        self.root.iconphoto(True, self.app_icon)
 
         # Load styles
         self.get_styles()
