@@ -168,16 +168,22 @@ class ListBoxFrame1(Frame):
                 column=0, columnspan=2, row=1, rowspan=2
             ) 
 
-    def populate_list(self, folder_path=None):
+    def populate_list(self, folder_path=None, selected_folder_index=None):
         print('called')
+        config = self.func_get_config()
         if folder_path==None:
-            subfolder_list = get_folder_names(self.func_get_config()['source_folder_path'])
+            subfolder_list = get_folder_names(config['source_folder_path'])
         else:
             subfolder_list = get_folder_names(folder_path)
-        self.listbox1.delete(0, END)
-        for item in subfolder_list:
-            self.listbox1.insert(END, item)
 
+        self.listbox1.delete(0, END)
+        for ind, item in enumerate(get_folder_names(config['source_folder_path'])):
+            if ind == selected_folder_index:
+                self.listbox1.insert(END, "➜ "+item)
+            else:
+                self.listbox1.insert(END, item)
+        if selected_folder_index:
+            self.listbox1.selection_set(selected_folder_index)
 
 # MSG: Settings tab
 
@@ -306,7 +312,12 @@ class ModManager:
     def handle_folder_selection(self, event):
         selected_index = event.widget.curselection()[0]
         selected_item = event.widget.get(selected_index)
+        config = self.read_config()
         
+        # TODO: work on this
+        folder_path = os.path.join(config['source_folder_path'], selected_item)
+        self.listbox_frame_1.populate_list(folder_path=folder_path, selected_folder_index=selected_index)
+
         self.clear_mod_file_indexes()
         self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.get_mod_file_indexes())
         self.set_mod_folder_index(selected_index)
