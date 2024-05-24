@@ -84,7 +84,7 @@ class ButtonBar(Frame):
 
 
 class ListBoxFrame2(Frame):
-    def __init__(self, master, func_get_config, item_select_command ):
+    def __init__(self, master, func_get_config, item_select_command, select_all_command, deselect_all_command):
         super().__init__(master)  # Call parent constructor
         self.master = master
 
@@ -112,10 +112,10 @@ class ListBoxFrame2(Frame):
         button_texts = ["Select All", "De-Select All"]
         
         button_select_all = ttk.Button(self, text="Select All", style="Custom1.TButton")
-        button_select_all.bind('<Button>', lambda event: self.handle_select_all(event))
+        button_select_all.bind('<Button>', lambda event: select_all_command(event))
         button_select_all.grid(column=0, row=6)
         button_deselect_all = ttk.Button(self, text="De-Select All", style="Custom1.TButton")
-        button_deselect_all.bind('<Button>', lambda event: self.handle_deselect_all(event))
+        button_deselect_all.bind('<Button>', lambda event: deselect_all_command(event))
         button_deselect_all.grid(column=1, row=6)
 
     # BUG: why does it need double click to show the list?
@@ -125,25 +125,14 @@ class ListBoxFrame2(Frame):
         if folder_index is not None:
 
             self.listbox2.delete(0, END)
-            print(folder_index)
+            print(f"{folder_index = }")
             pp(self.func_get_config(), indent=4)
             mod_folder_name = get_folder_names(self.func_get_config()['source_folder_path'])[folder_index]
-            print(os.path.join(self.func_get_config()['source_folder_path'], mod_folder_name))
+            # print(os.path.join(self.func_get_config()['source_folder_path'], mod_folder_name))
             items_list = get_folder_contents(self.func_get_config()['source_folder_path'])[folder_index]['files']
             for item in items_list:
                 self.listbox2.insert(END, item)
     
-    # TODO: make this maintain a list of selected files
-    def handle_select_all(self, event):
-        print()
-        print(event.widget)
-        print(event.widget.curselection())
-        # if folder_index is not None:
-        #     mod_files = get_folder_contents(self.read_config()['source_file_path'])[folder_index]['files']
-        #     self.selected_mod_files = mod_files
-
-    def handle_deselect_all(self):
-        pass
 
 # BOOKMARK: LISTBOX 1
 
@@ -155,16 +144,13 @@ class ListBoxFrame1(Frame):
 
         self.func_get_config = func_get_config
 
-        # Create title label
         self.title_label = ttk.Label(
             self, text='Mod Folders', font=("TkDefaultFont", 12, "bold")
         )
         self.title_label.grid(column=0, columnspan=2, row=0)
 
-        # Create listbox
-        self.listbox1 = Listbox(self, selectmode="browse")
-        self.listbox1.bind('<Button>', lambda event: item_select_command(event))
-
+        self.listbox1 = Listbox(self, selectmode="single")
+        self.listbox1.bind('<<ListboxSelect>>', lambda event: item_select_command(event))
         self.populate_list()
 
         if full_height:
@@ -197,20 +183,16 @@ class FolderPathEntry(Frame):
 
         self.path_type = path_type
 
-        # Label for folder path
         self.folder_label = ttk.Label(self, text=label_text)
         self.folder_label.grid(column=0, columnspan=2, row=0)
 
-        # Input box for folder path
         self.folder_entry = ttk.Entry(
             self, 
             textvariable=variable, 
-            width=25,
-            # validatecommand=lambda value: path_change_command(value, self.path_type)
+            width=25
         )  
         self.folder_entry.grid(column=2, columnspan=3, row=0, padx=15)
 
-        # Browse button
         self.browse_button = ttk.Button(
             self,
             text="Browse",
@@ -268,11 +250,13 @@ class ModManager:
             self.refresh_mod_list
             )
         self.mod_options_frame.grid(column=6, row=0, rowspan=6)
-
+        # TODO: under construction
         self.listbox_frame_2 = ListBoxFrame2(
             self.manage_content_frame, 
             self.read_config,
-            self.handle_file_selection
+            self.handle_file_selection,
+            self.handle_select_all,
+            self.handle_deselect_all
         )
         self.listbox_frame_2.grid(column=2, columnspan=2, row=0, rowspan=6, sticky="n")
 
@@ -311,18 +295,50 @@ class ModManager:
         # Run the main loop
         self.root.mainloop()
 
-    # FIXME: the very first call gives event=(,)
     def handle_folder_selection(self, event):
         selected_index = event.widget.curselection()[0]
         selected_item = event.widget.get(selected_index)
-        print(event.widget.curselection())
         self.listbox_frame_2.reset_file_list(folder_index=selected_index)
+        self.set_mod_folder_index(selected_index)
+        self.clear_mod_file_indexes()
+    
+    def set_mod_folder_index(self, index):
+        self.mod_folder_index = index
+    
+    def get_mod_folder_index(self):
+        return self.mod_folder_index
+
+    def clear_mod_folder_index(self):
+        self.mod_folder_index = None
+    
+    def set_mod_files_indexes(self, indexes):
+        self.selected_mod_files = indexes
+    
+    def get_mod_file_indexes(self):
+        return self.selected_mod_files
+
+    def clear_mod_file_indexes(self):
+        self.selected_mod_files = []
+
+    # TODO: make this maintain a list of selected files
+    def handle_select_all(self, event):
+        print()
+        print(self.listbox2)
+        print()
+        # if folder_index is not None:
+        #     mod_files = get_folder_contents(self.read_config()['source_file_path'])[folder_index]['files']
+        #     self.selected_mod_files = mod_files
+
+    def handle_deselect_all(self):
+        pass
 
     def handle_file_selection(self, event):
-        print(event.widget.curselection())
+        print(">> handle_file_selection")
+        # print(event.widget.curselection())
         # selected_index = event.widget.curselection()[0]
         # selected_item = event.widget.get(selected_index)
         self.selected_mod_files = event.widget.curselection()
+        print(self.selected_mod_files)
 
     def get_base_dir(self):
         return self.app_base_dir
@@ -378,11 +394,12 @@ class ModManager:
     def set_source_folder_path(self, path):
         if not os.path.isabs(path):
             raise ValueError('Path should be absolute not relative.')
-        
+        self.clear_mod_folder_index()
         self.write_config(
             'source_folder_path', 
             path
         )
+        
 
     def set_destination_folder_path(self, path):
         if not os.path.isabs(path):
