@@ -112,7 +112,7 @@ class ListBoxFrame2(Frame):
         button_texts = ["Select All", "De-Select All"]
         
         button_select_all = ttk.Button(self, text="Select All", style="Custom1.TButton")
-        button_select_all.bind('<Button>', lambda event: select_all_command(event))
+        button_select_all.bind('<Button>', lambda event: select_all_command(event, self.folder_index))
         button_select_all.grid(column=0, row=6)
         button_deselect_all = ttk.Button(self, text="De-Select All", style="Custom1.TButton")
         button_deselect_all.bind('<Button>', lambda event: deselect_all_command(event))
@@ -123,6 +123,7 @@ class ListBoxFrame2(Frame):
         """updates the listbox with files from within the mod folder
         """
         if folder_index is not None:
+            self.folder_index = folder_index
 
             self.listbox2.delete(0, END)
             print(f"{folder_index = }")
@@ -321,13 +322,13 @@ class ModManager:
         self.selected_mod_files = []
 
     # TODO: make this maintain a list of selected files
-    def handle_select_all(self, event):
+    def handle_select_all(self, event, folder_index):
+        print(folder_index)
+        print(self.get_mod_file_indexes())
         print()
-        print(self.listbox2)
-        print()
-        # if folder_index is not None:
-        #     mod_files = get_folder_contents(self.read_config()['source_file_path'])[folder_index]['files']
-        #     self.selected_mod_files = mod_files
+        if folder_index is not None:
+            mod_files = get_folder_contents(self.read_config()['source_folder_path'])[folder_index]['files']
+            self.selected_mod_files = mod_files
 
     def handle_deselect_all(self):
         pass
