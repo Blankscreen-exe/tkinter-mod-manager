@@ -430,23 +430,15 @@ class ModManager:
 
     def install_mods(self, folder_name):
         s = self.read_config()
-        # get selected_mod_folder
         mod_folder_index = self.get_mod_folder_index()
-        print(mod_folder_index)
+
         mod_folder_name = get_folder_names(s['source_folder_path'])[mod_folder_index]
-        print(mod_folder_name)
         src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
-        print(src_dir)
         all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
-        print(all_file_names)
-        # filtered_file_list = filter(lambda x, i: i in self.get_mod_file_indexes(), all_file_names)
-        # print(list(filtered_file_list))
-        filtered_file_list = []
-        for ind, file_name in enumerate(all_file_names):
-            if ind in self.get_mod_file_indexes():
-                filtered_file_list.append(file_name)
-        print(filtered_file_list)
-        print("------------------------------------")
+        filtered_file_list =  [file_name for ind, file_name in enumerate(all_file_names) if ind in self.get_mod_file_indexes()]
+        # for ind, file_name in enumerate(all_file_names):
+        #     if ind in self.get_mod_file_indexes():
+        #         filtered_file_list.append(file_name)
         dst_dir = s['destination_folder_path']
         copy_files(src_dir, filtered_file_list, dst_dir)
 
