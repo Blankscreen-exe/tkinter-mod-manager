@@ -1,10 +1,13 @@
 from tkinter import Tk, ttk, filedialog, Frame, StringVar, IntVar, Variable, END, PhotoImage
 from tkinter import Listbox
-from pprint import pprint as pp
 from functions import *
 import os
 import json
 import platform
+import logging
+
+logging.basicConfig(filename='app.log', filemode='a', level=logging.DEBUG, format="[%(asctime)s](%(name)s - %(levelname)s): %(message)s")
+logging.info('This will get logged to a file', exc_info=True)
 
 # BOOKMARK: BUTTON OPTIONS
 
@@ -58,17 +61,20 @@ class ListBoxFrame2(Frame):
     def reset_file_list(self, folder_index=None, selected_indexes=[]):
         """updates the listbox with files from within the mod folder
         """
-        if folder_index is not None:
-            self.folder_index = folder_index
-            self.listbox2.delete(0, END)
-            items_list = get_folder_contents(self.func_get_config()['source_folder_path'])[folder_index]['files']
-            for ind, item in enumerate(items_list):
-                if ind in selected_indexes:
-                    self.listbox2.insert(END, "➕ "+item)
-                else:
-                    self.listbox2.insert(END, item)
-            for index in selected_indexes:
-                self.listbox2.selection_set(index)
+        try:
+            if folder_index is not None:
+                self.folder_index = folder_index
+                self.listbox2.delete(0, END)
+                items_list = get_folder_contents(self.func_get_config()['source_folder_path'])[folder_index]['files']
+                for ind, item in enumerate(items_list):
+                    if ind in selected_indexes:
+                        self.listbox2.insert(END, "➕ "+item)
+                    else:
+                        self.listbox2.insert(END, item)
+                for index in selected_indexes:
+                    self.listbox2.selection_set(index)
+        except Exception as e:
+            logging.exception(e)
     
 
 # BOOKMARK: LISTBOX 1
@@ -244,12 +250,14 @@ class ModManager:
 
     def handle_folder_selection(self, event):
         selected_index = event.widget.curselection()[0]
-        
-        self.listbox_frame_1.populate_list(selected_folder_index=selected_index)
+        try:
+            self.listbox_frame_1.populate_list(selected_folder_index=selected_index)
 
-        self.clear_mod_file_indexes()
-        self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.get_mod_file_indexes())
-        self.set_mod_folder_index(selected_index)
+            self.clear_mod_file_indexes()
+            self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.get_mod_file_indexes())
+            self.set_mod_folder_index(selected_index)
+        except Exception as e:
+            logging.exception(e)
     
     def set_mod_folder_index(self, index):
         self.mod_folder_index = index
@@ -270,45 +278,57 @@ class ModManager:
         self.selected_mod_files = []
 
     def handle_select_all(self, event, folder_index):
-        if folder_index is not None:
-            mod_files = [ind for ind, _ in enumerate(get_folder_contents(self.read_config()['source_folder_path'])[folder_index]['files'])]
-            self.set_mod_files_indexes(mod_files)
-        
-        self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
+        try:
+            if folder_index is not None:
+                mod_files = [ind for ind, _ in enumerate(get_folder_contents(self.read_config()['source_folder_path'])[folder_index]['files'])]
+                self.set_mod_files_indexes(mod_files)
+            
+            self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
+        except Exception as e:
+            logging.exception(e)
 
     def handle_deselect_all(self):
-        self.clear_mod_file_indexes()
-        folder_index = self.listbox_frame_2.folder_index
-        self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
+        try:
+            self.clear_mod_file_indexes()
+            folder_index = self.listbox_frame_2.folder_index
+            self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
+        except Exception as e:
+            logging.exception(e)
 
     def handle_file_selection(self, event):
-        selected_index = self.listbox_frame_2.folder_index
-        self.set_mod_files_indexes(event.widget.curselection())
-        self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.selected_mod_files)
-
-    def get_base_dir(self):
-        return self.app_base_dir
+        try:
+            selected_index = self.listbox_frame_2.folder_index
+            self.set_mod_files_indexes(event.widget.curselection())
+            self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.selected_mod_files)
+        except Exception as e:
+            logging.exception(e)
 
     def handle_browse(self, data, path_type):
         selected_folder = filedialog.askdirectory()
-        if selected_folder:
-            if path_type == 'source':
-                self.set_source_folder_path(selected_folder)
-                self.source_folder_path_var.set(selected_folder)
-            elif path_type == 'destination':
-                self.set_destination_folder_path(selected_folder)
-                self.destination_folder_path_var.set(selected_folder)
+        try:
+            if selected_folder:
+                if path_type == 'source':
+                    self.set_source_folder_path(selected_folder)
+                    self.source_folder_path_var.set(selected_folder)
+                elif path_type == 'destination':
+                    self.set_destination_folder_path(selected_folder)
+                    self.destination_folder_path_var.set(selected_folder)
+        except Exception as e:
+            logging.exception(e)
 
     def handle_path_change(self, name, index, mode, sv, path_type):
         config = self.read_config()
-        if sv.get():
-            if path_type == 'source':
-                self.set_source_folder_path(sv.get())
-                self.source_folder_path_var.set(sv.get())
-                self.listbox_frame_1.populate_list()
-            elif path_type == 'destination':
-                self.set_destination_folder_path(sv.get())
-                self.destination_folder_path_var.set(sv.get())
+        try:
+            if sv.get():
+                if path_type == 'source':
+                    self.set_source_folder_path(sv.get())
+                    self.source_folder_path_var.set(sv.get())
+                    self.listbox_frame_1.populate_list()
+                elif path_type == 'destination':
+                    self.set_destination_folder_path(sv.get())
+                    self.destination_folder_path_var.set(sv.get())
+        except Exception as e:
+            logging.exception(e)
 
     def read_config(self):
         try:
@@ -333,29 +353,37 @@ class ModManager:
             json.dump(config, file, indent=4)
     
     def refresh_mod_list(self, event):
-        # TODO: do something here
-        folder_contents = get_folder_contents(self.read_config()['source_folder_path'])
-        folder_names = get_folder_names(self.read_config()['source_folder_path'])
-        self.listbox_frame_1.populate_list()
+        try:
+            folder_contents = get_folder_contents(self.read_config()['source_folder_path'])
+            folder_names = get_folder_names(self.read_config()['source_folder_path'])
+            self.listbox_frame_1.populate_list()
+        except Exception as e:
+            logging.exception(e)
 
     def set_source_folder_path(self, path):
-        if not os.path.isabs(path):
-            raise ValueError('Path should be absolute not relative.')
-        self.clear_mod_folder_index()
-        self.write_config(
-            'source_folder_path', 
-            path
-        )
+        try:
+            if not os.path.isabs(path):
+                raise ValueError('Path should be absolute not relative.')
+            self.clear_mod_folder_index()
+            self.write_config(
+                'source_folder_path', 
+                path
+            )
+        except Exception as e:
+            logging.exception(e)
         
 
     def set_destination_folder_path(self, path):
-        if not os.path.isabs(path):
-            raise ValueError('Path should be absolute not relative.')
-        
-        self.write_config(
-            'destination_folder_path', 
-            path
-        )
+        try:
+            if not os.path.isabs(path):
+                raise ValueError('Path should be absolute not relative.')
+            
+            self.write_config(
+                'destination_folder_path', 
+                path
+            )
+        except Exception as e:
+            logging.exception(e)
 
     def get_config_template(self):
         return {
@@ -372,25 +400,31 @@ class ModManager:
         }
 
     def install_mods(self, folder_name):
-        s = self.read_config()
-        mod_folder_index = self.get_mod_folder_index()
+        try:
+            s = self.read_config()
+            mod_folder_index = self.get_mod_folder_index()
 
-        mod_folder_name = get_folder_names(s['source_folder_path'])[mod_folder_index]
-        src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
-        all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
-        filtered_file_list =  [file_name for ind, file_name in enumerate(all_file_names) if ind in self.get_mod_file_indexes()]
-        dst_dir = s['destination_folder_path']
-        copy_files(src_dir, filtered_file_list, dst_dir)
+            mod_folder_name = get_folder_names(s['source_folder_path'])[mod_folder_index]
+            src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
+            all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
+            filtered_file_list =  [file_name for ind, file_name in enumerate(all_file_names) if ind in self.get_mod_file_indexes()]
+            dst_dir = s['destination_folder_path']
+            copy_files(src_dir, filtered_file_list, dst_dir)
+        except Exception as e:
+            logging.exception(e)
 
     def uninstall_mods(self, folder_name):
-        s = self.read_config()
-        mod_folder_index = self.get_mod_folder_index()
-        mod_folder_name = get_folder_names(s['source_folder_path'])[mod_folder_index]
-        src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
-        all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
-        filtered_file_list =  [file_name for ind, file_name in enumerate(all_file_names) if ind in self.get_mod_file_indexes()]
-        dst_dir = s['destination_folder_path']
-        delete_files(filtered_file_list, dst_dir)
+        try:
+            s = self.read_config()
+            mod_folder_index = self.get_mod_folder_index()
+            mod_folder_name = get_folder_names(s['source_folder_path'])[mod_folder_index]
+            src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
+            all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
+            filtered_file_list =  [file_name for ind, file_name in enumerate(all_file_names) if ind in self.get_mod_file_indexes()]
+            dst_dir = s['destination_folder_path']
+            delete_files(filtered_file_list, dst_dir)
+        except Exception as e:
+            logging.exception(e)
 
     def get_styles(self):
         button_style = ttk.Style()
