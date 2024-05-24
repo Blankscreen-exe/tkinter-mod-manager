@@ -62,6 +62,26 @@ def copy_all_files(src_dir, dst_dir):
       src_file = os.path.join(src_dir, filename)
       dst_file = os.path.join(dst_dir, filename)
       copy_file(src_file, dst_dir)
+
+    
+def copy_files(src_dir: str, file_names: list, dst_dir: str) -> None:
+  """
+  Copies files from source directory to destination directory.
+
+  Args:
+    src_dir: The source directory path.
+    file_names: The list of file names to copy.
+    dst_dir: The destination directory path.
+  """
+  for file_name in file_names:
+    src_path = os.path.join(src_dir, file_name)
+    dst_path = os.path.join(dst_dir, file_name)
+    if os.path.isfile(src_path):
+      os.makedirs(dst_dir, exist_ok=True)  # Create destination directory if it doesn't exist
+      # os.replace(os.path.join(src_dir, file_name), os.path.join(dst_dir, file_name))  # Replace file to avoid overwrite issues
+      copy_file(os.path.join(src_dir, file_name), os.path.join(dst_dir, file_name))
+    else:
+      print(f"File not found: {src_path}")
       
 def get_folder_names(folder_path):
   """

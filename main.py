@@ -253,7 +253,8 @@ class ModManager:
 
         self.mod_options_frame = ButtonBar(
             self.manage_content_frame,
-            self.refresh_mod_list
+            self.refresh_mod_list,
+            self.install_mods
             )
         self.mod_options_frame.grid(column=6, row=0, rowspan=6)
         # TODO: under construction
@@ -327,11 +328,7 @@ class ModManager:
     def clear_mod_file_indexes(self):
         self.selected_mod_files = []
 
-    # TODO: make this maintain a list of selected files
     def handle_select_all(self, event, folder_index):
-        print("INSIDE handle_select_all")
-        print(self.get_mod_file_indexes())
-        print()
         if folder_index is not None:
             mod_files = [ind for ind, _ in enumerate(get_folder_contents(self.read_config()['source_folder_path'])[folder_index]['files'])]
             self.set_mod_files_indexes(mod_files)
@@ -344,19 +341,9 @@ class ModManager:
         self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
 
     def handle_file_selection(self, event):
-        print(">> handle_file_selection")
-        # print(event.widget.curselection())
-        # selected_index = event.widget.curselection()[0]
-        # selected_item = event.widget.get(selected_index)
         selected_index = self.listbox_frame_2.folder_index
         self.set_mod_files_indexes(event.widget.curselection())
-        # self.selected_mod_files = event.widget.curselection()
-
         self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.selected_mod_files)
-        print("NO ERROR")
-
-        # self.selected_mod_files = event.widget.curselection()
-        print(self.selected_mod_files)
 
     def get_base_dir(self):
         return self.app_base_dir
@@ -442,7 +429,26 @@ class ModManager:
         }
 
     def install_mods(self, folder_name):
-        pass
+        s = self.read_config()
+        # get selected_mod_folder
+        mod_folder_index = self.get_mod_folder_index()
+        print(mod_folder_index)
+        mod_folder_name = get_folder_names(s['source_folder_path'])[mod_folder_index]
+        print(mod_folder_name)
+        src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
+        print(src_dir)
+        all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
+        print(all_file_names)
+        # filtered_file_list = filter(lambda x, i: i in self.get_mod_file_indexes(), all_file_names)
+        # print(list(filtered_file_list))
+        filtered_file_list = []
+        for ind, file_name in enumerate(all_file_names):
+            if ind in self.get_mod_file_indexes():
+                filtered_file_list.append(file_name)
+        print(filtered_file_list)
+        print("------------------------------------")
+        dst_dir = s['destination_folder_path']
+        copy_files(src_dir, filtered_file_list, dst_dir)
 
     def uninstall_mods(self, folder_name):
         pass
