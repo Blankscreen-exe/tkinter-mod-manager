@@ -119,20 +119,25 @@ class ListBoxFrame2(Frame):
         button_deselect_all.grid(column=1, row=6)
 
     # BUG: why does it need double click to show the list?
-    def reset_file_list(self, folder_index=None):
+    def reset_file_list(self, folder_index=None, selected_indexes=[]):
         """updates the listbox with files from within the mod folder
         """
+        print(f"{folder_index = }", selected_indexes)
         if folder_index is not None:
             self.folder_index = folder_index
 
             self.listbox2.delete(0, END)
-            print(f"{folder_index = }")
             pp(self.func_get_config(), indent=4)
             mod_folder_name = get_folder_names(self.func_get_config()['source_folder_path'])[folder_index]
             # print(os.path.join(self.func_get_config()['source_folder_path'], mod_folder_name))
             items_list = get_folder_contents(self.func_get_config()['source_folder_path'])[folder_index]['files']
-            for item in items_list:
-                self.listbox2.insert(END, item)
+            for ind, item in enumerate(items_list):
+                if ind in selected_indexes:
+                    self.listbox2.insert(END, "➕ "+item)
+                else:
+                    self.listbox2.insert(END, item)
+            for index in selected_indexes:
+                self.listbox2.selection_set(index)
     
 
 # BOOKMARK: LISTBOX 1
@@ -299,9 +304,10 @@ class ModManager:
     def handle_folder_selection(self, event):
         selected_index = event.widget.curselection()[0]
         selected_item = event.widget.get(selected_index)
-        self.listbox_frame_2.reset_file_list(folder_index=selected_index)
-        self.set_mod_folder_index(selected_index)
+        
         self.clear_mod_file_indexes()
+        self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.get_mod_file_indexes())
+        self.set_mod_folder_index(selected_index)
     
     def set_mod_folder_index(self, index):
         self.mod_folder_index = index
@@ -323,12 +329,14 @@ class ModManager:
 
     # TODO: make this maintain a list of selected files
     def handle_select_all(self, event, folder_index):
-        print(folder_index)
+        print("INSIDE handle_select_all")
         print(self.get_mod_file_indexes())
         print()
         if folder_index is not None:
-            mod_files = get_folder_contents(self.read_config()['source_folder_path'])[folder_index]['files']
-            self.selected_mod_files = mod_files
+            mod_files = [ind for ind, _ in enumerate(get_folder_contents(self.read_config()['source_folder_path'])[folder_index]['files'])]
+            self.set_mod_files_indexes(mod_files)
+        
+        self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
 
     def handle_deselect_all(self):
         pass
@@ -338,7 +346,14 @@ class ModManager:
         # print(event.widget.curselection())
         # selected_index = event.widget.curselection()[0]
         # selected_item = event.widget.get(selected_index)
-        self.selected_mod_files = event.widget.curselection()
+        selected_index = self.listbox_frame_2.folder_index
+        self.set_mod_files_indexes(event.widget.curselection())
+        # self.selected_mod_files = event.widget.curselection()
+
+        self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.selected_mod_files)
+        print("NO ERROR")
+
+        # self.selected_mod_files = event.widget.curselection()
         print(self.selected_mod_files)
 
     def get_base_dir(self):
