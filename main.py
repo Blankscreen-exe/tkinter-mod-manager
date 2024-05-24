@@ -6,61 +6,7 @@ import os
 import json
 import platform
 
-# Sample items lists (replace with your data source)
-# items_lists = [[], []]
-
-# items_lists[0] = get_folder_names(config.source_folder)
-
-# for index in range(20):
-#   items_lists[0].append(f'Item A - {index}')
-#   items_lists[1].append(f'Item B - {index}')
-
-
-# Function to handle listbox selection (replace with your logic)
-# def handle_selection(event, listbox_type):
-#     selected_index = event.widget.curselection()[0]
-#     selected_item = event.widget.get(selected_index)
-#     mod_folder_path = os.path.join(config.source_folder)
-#     print(mod_folder_path)
-#     items_lists[1] = get_folder_contents(mod_folder_path)[selected_index]["files"]
-#     print(items_lists[1])
-
-#     print(
-#         f"Selected item in listbox {listbox_type}: {selected_item} mit {selected_index}"
-#     )
-
-#     # TODO: Update the target listbox based on the selection
-#     target_listbox.delete(0, tk.END)  # Clear target listbox first (optional)
-#     # Add new items to the target listbox based on selected item or logic
-#     target_listbox.insert("end", "New Item 1 based on", selected_item)
-#     target_listbox.insert("end", "New Item 2 based on", selected_item)
-
-# BOOKMARK: scroll listbox
-
-
-class ScrollableListbox(Frame):
-    def __init__(self, master, items, width=50, height=10, selectmode="browse"):
-        super().__init__(master)
-        self.master = master
-
-        # Listbox
-        self.listbox = Listbox(self, selectmode=selectmode, width=width, height=height)
-        for item in items:
-            self.listbox.insert("end", item)
-        self.listbox.grid(column=0, row=0)
-
-        # Scrollbar
-        self.scrollbar = ttk.Scrollbar(
-            self, orient="vertical", command=self.listbox.yview
-        )
-        self.scrollbar.grid(column=1, row=0)
-
-        # Link scrollbar and listbox
-        self.listbox.config(yscrollcommand=self.scrollbar.set)
-
-
 # BOOKMARK: BUTTON OPTIONS
-
 
 class ButtonBar(Frame):
     def __init__(self, master, func_refresh_list=None, func_install_mod=None, func_uninstall_mod=None):
@@ -85,31 +31,22 @@ class ButtonBar(Frame):
 
 class ListBoxFrame2(Frame):
     def __init__(self, master, func_get_config, item_select_command, select_all_command, deselect_all_command):
-        super().__init__(master)  # Call parent constructor
+        super().__init__(master)
         self.master = master
 
         self.func_get_config = func_get_config
 
-
-        # Create title label
         self.title_label = ttk.Label(
             self, text='Mod Files', font=("TkDefaultFont", 12, "bold")
         )
         self.title_label.grid(column=0, columnspan=2, row=0)
 
-        # Create listbox
         self.listbox2 = Listbox(self, height=5, selectmode="multiple")
-        
-        # REVIEW: do we need to run it here
-        # self.reset_file_list()
 
         self.listbox2.bind(
             "<<ListboxSelect>>", lambda event: item_select_command(event)
         )
         self.listbox2.grid(column=0, columnspan=2, row=1, rowspan=5, ipadx=7)
-
-        # Create buttons dynamically
-        button_texts = ["Select All", "De-Select All"]
         
         button_select_all = ttk.Button(self, text="Select All", style="Custom1.TButton")
         button_select_all.bind('<Button>', lambda event: select_all_command(event, self.folder_index))
@@ -118,18 +55,12 @@ class ListBoxFrame2(Frame):
         button_deselect_all.bind('<Button>', lambda event: deselect_all_command())
         button_deselect_all.grid(column=1, row=6)
 
-    # BUG: why does it need double click to show the list?
     def reset_file_list(self, folder_index=None, selected_indexes=[]):
         """updates the listbox with files from within the mod folder
         """
-        print(f"{folder_index = }", selected_indexes)
         if folder_index is not None:
             self.folder_index = folder_index
-
             self.listbox2.delete(0, END)
-            pp(self.func_get_config(), indent=4)
-            mod_folder_name = get_folder_names(self.func_get_config()['source_folder_path'])[folder_index]
-            # print(os.path.join(self.func_get_config()['source_folder_path'], mod_folder_name))
             items_list = get_folder_contents(self.func_get_config()['source_folder_path'])[folder_index]['files']
             for ind, item in enumerate(items_list):
                 if ind in selected_indexes:
@@ -141,7 +72,6 @@ class ListBoxFrame2(Frame):
     
 
 # BOOKMARK: LISTBOX 1
-
 
 class ListBoxFrame1(Frame):
     def __init__(self, master, func_get_config, item_select_command, full_height=False):
@@ -168,16 +98,13 @@ class ListBoxFrame1(Frame):
                 column=0, columnspan=2, row=1, rowspan=2
             ) 
 
-    def populate_list(self, folder_path=None, selected_folder_index=None):
-        print('called')
+    def populate_list(self, selected_folder_index=None):
         config = self.func_get_config()
-        if folder_path==None:
-            subfolder_list = get_folder_names(config['source_folder_path'])
-        else:
-            subfolder_list = get_folder_names(folder_path)
+        
+        subfolder_list = get_folder_names(config['source_folder_path'])
 
         self.listbox1.delete(0, END)
-        for ind, item in enumerate(get_folder_names(config['source_folder_path'])):
+        for ind, item in enumerate(subfolder_list):
             if ind == selected_folder_index:
                 self.listbox1.insert(END, "➜ "+item)
             else:
@@ -222,9 +149,9 @@ class ModManager:
 
         # Constants
         self.app_title = 'Mod Manager'
-        self.app_window_size = "440x220"
+        self.app_window_size = "365x220" if platform.system() == "Windows" else "440x220" 
         self.config_file_name = 'modmanager_config.json'
-        self.app_icon = './shape.png'
+        self.app_icon = '.\\shape.png'
         self.app_base_dir = os.getcwd()
         self.os_is_windows = platform.system() == "Windows"
         self.selected_mod_files = []
@@ -237,8 +164,11 @@ class ModManager:
         self.root.title(self.app_title)
         self.root.geometry(self.app_window_size)
         self.root.resizable(False, False)
-        self.app_icon = PhotoImage(file=os.path.abspath(self.app_icon))
+        # cannot be used with pyinstaller
+        # self.app_icon = PhotoImage(file=os.path.abspath(self.app_icon))
+        self.app_icon = PhotoImage(file=self.app_icon)
         self.root.iconphoto(True, self.app_icon)
+        # self.root.iconbitmap(os.path.abspath(self.app_icon))
 
         # Load styles
         self.get_styles()
@@ -267,7 +197,7 @@ class ModManager:
             self.uninstall_mods
             )
         self.mod_options_frame.grid(column=6, row=0, rowspan=6)
-        # TODO: under construction
+
         self.listbox_frame_2 = ListBoxFrame2(
             self.manage_content_frame, 
             self.read_config,
@@ -314,12 +244,8 @@ class ModManager:
 
     def handle_folder_selection(self, event):
         selected_index = event.widget.curselection()[0]
-        selected_item = event.widget.get(selected_index)
-        config = self.read_config()
         
-        # TODO: work on this
-        folder_path = os.path.join(config['source_folder_path'], selected_item)
-        self.listbox_frame_1.populate_list(folder_path=folder_path, selected_folder_index=selected_index)
+        self.listbox_frame_1.populate_list(selected_folder_index=selected_index)
 
         self.clear_mod_file_indexes()
         self.listbox_frame_2.reset_file_list(folder_index=selected_index, selected_indexes=self.get_mod_file_indexes())
@@ -374,11 +300,12 @@ class ModManager:
                 self.destination_folder_path_var.set(selected_folder)
 
     def handle_path_change(self, name, index, mode, sv, path_type):
+        config = self.read_config()
         if sv.get():
             if path_type == 'source':
                 self.set_source_folder_path(sv.get())
                 self.source_folder_path_var.set(sv.get())
-                self.listbox_frame_1.populate_list(folder_path=sv.get())
+                self.listbox_frame_1.populate_list()
             elif path_type == 'destination':
                 self.set_destination_folder_path(sv.get())
                 self.destination_folder_path_var.set(sv.get())
@@ -406,10 +333,10 @@ class ModManager:
             json.dump(config, file, indent=4)
     
     def refresh_mod_list(self, event):
+        # TODO: do something here
         folder_contents = get_folder_contents(self.read_config()['source_folder_path'])
         folder_names = get_folder_names(self.read_config()['source_folder_path'])
-        print(folder_contents)
-        print(folder_names)
+        self.listbox_frame_1.populate_list()
 
     def set_source_folder_path(self, path):
         if not os.path.isabs(path):
@@ -452,9 +379,6 @@ class ModManager:
         src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
         all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
         filtered_file_list =  [file_name for ind, file_name in enumerate(all_file_names) if ind in self.get_mod_file_indexes()]
-        # for ind, file_name in enumerate(all_file_names):
-        #     if ind in self.get_mod_file_indexes():
-        #         filtered_file_list.append(file_name)
         dst_dir = s['destination_folder_path']
         copy_files(src_dir, filtered_file_list, dst_dir)
 
@@ -473,7 +397,7 @@ class ModManager:
         button_style.configure(
             "Custom1.TButton",
             font=("Calibri", 8, "normal"),
-            foreground="white",
+            foreground="black" if self.os_is_windows else "white",
             background="#278ef0",
             width="11",
         )
