@@ -82,7 +82,24 @@ def copy_files(src_dir: str, file_names: list, dst_dir: str) -> None:
       copy_file(os.path.join(src_dir, file_name), os.path.join(dst_dir, file_name))
     else:
       print(f"File not found: {src_path}")
-      
+
+def delete_files(file_names: list, dst_dir: str) -> None:
+  """
+  Deletes files from a destination directory based on names provided from a source directory (ignored in this case).
+
+  Args:
+    src_dir: The source directory path (string). This argument is ignored for deletion.
+    file_names: A list of file names to target and delete (strings).
+    dst_dir: The destination directory path (string). Files with matching names will be deleted from here.
+  """
+  for file_name in file_names:
+    full_path = os.path.join(dst_dir, file_name)
+    if os.path.isfile(full_path):
+      os.remove(full_path)
+      print(f"Deleted file: {full_path}")
+    else:
+      print(f"File not found: {full_path}")
+
 def get_folder_names(folder_path):
   """
   Returns a list of folder names inside a given folder.

@@ -254,7 +254,8 @@ class ModManager:
         self.mod_options_frame = ButtonBar(
             self.manage_content_frame,
             self.refresh_mod_list,
-            self.install_mods
+            self.install_mods,
+            self.uninstall_mods
             )
         self.mod_options_frame.grid(column=6, row=0, rowspan=6)
         # TODO: under construction
@@ -443,13 +444,14 @@ class ModManager:
         copy_files(src_dir, filtered_file_list, dst_dir)
 
     def uninstall_mods(self, folder_name):
-        pass
-
-    def select_all_files(self, folder_name):
-        pass
-
-    def deselect_all_files(self):
-        pass
+        s = self.read_config()
+        mod_folder_index = self.get_mod_folder_index()
+        mod_folder_name = get_folder_names(s['source_folder_path'])[mod_folder_index]
+        src_dir = os.path.join( s['source_folder_path'], mod_folder_name)
+        all_file_names = get_folder_contents(s['source_folder_path'])[mod_folder_index]['files']
+        filtered_file_list =  [file_name for ind, file_name in enumerate(all_file_names) if ind in self.get_mod_file_indexes()]
+        dst_dir = s['destination_folder_path']
+        delete_files(filtered_file_list, dst_dir)
 
     def get_styles(self):
         button_style = ttk.Style()
