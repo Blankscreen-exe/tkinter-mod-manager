@@ -2,6 +2,8 @@
 
 This is a simple mod manager built on [Tkinter](https://docs.python.org/3/library/tk.html). This applet is named mod manager because there are certain games which have an option to add or remove mods by copying/pasting/deleting files from one directory to another. The mod files in questions are named in a non-human-friendly way (e.g. `1234567.mod`), now copying and pasting those files from directory to another will of course work but not when you want to keep track of which files belong to which mod. This applet makes that task easy.
 
+> [Download Mod Manager 📥](https://github.com/Blankscreen-exe/tkinter-mod-manager/releases/tag/v1.0)
+
 ## Features
 
 - select **source folder path** with your downloaded mod files.
