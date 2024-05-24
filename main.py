@@ -115,7 +115,7 @@ class ListBoxFrame2(Frame):
         button_select_all.bind('<Button>', lambda event: select_all_command(event, self.folder_index))
         button_select_all.grid(column=0, row=6)
         button_deselect_all = ttk.Button(self, text="De-Select All", style="Custom1.TButton")
-        button_deselect_all.bind('<Button>', lambda event: deselect_all_command(event))
+        button_deselect_all.bind('<Button>', lambda event: deselect_all_command())
         button_deselect_all.grid(column=1, row=6)
 
     # BUG: why does it need double click to show the list?
@@ -339,7 +339,9 @@ class ModManager:
         self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
 
     def handle_deselect_all(self):
-        pass
+        self.clear_mod_file_indexes()
+        folder_index = self.listbox_frame_2.folder_index
+        self.listbox_frame_2.reset_file_list(folder_index=folder_index, selected_indexes=self.get_mod_file_indexes())
 
     def handle_file_selection(self, event):
         print(">> handle_file_selection")
