@@ -434,13 +434,14 @@ class ModManager:
         return {
             "source_folder_path": "",
             "destination_folder_path": "",
-            "mod_list": [
+            # REVIEW: not using it anymore, fetching file list from the functions instead
+            # "mod_list": [
                 # REF: Example mod list item
                 # {
                 #   "folder_name": "",
                 #   "files": []
                 # }
-            ],
+            # ],
         }
 
     def install_mods(self, folder_name):
